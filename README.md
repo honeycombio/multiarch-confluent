@@ -15,8 +15,26 @@ both x86 and arm64, and the confluent images are x86-only. That approach would
 also require knowing which files specifically we want to copy over. But it's the
 same idea in spirit.
 
+So instead, `build.sh` gets the image whose contents we want, untars all but the
+base layer and re-tars so they're merged (`tar --concatenate` is possibly buggy
+for more than two files) and puts those in the new Docker image.
+
+I'd intended to use `ADD newtar.tar.gz /` and let Docker take care of unzipping,
+but ... that fails, presumably because the tarfile contains files that would
+overwrite the existing files: `Error processing tar file(duplicates of file
+paths not supported)`. (I don't _think_ `newtar.tar.gz` has any dupes itself.)
+
+Finally, instead of doing a `RUN tar -xzvf ...` in the Dockerfile, I have a
+`cmd` script that does that when the container is run. Because Github Actions
+doesn't yet have ARM64 builders, we'll be doing cross-platform builds with QEMU,
+and while that's fine for a build that is just a few `COPY`s, `RUN tar ...`
+would be quite slow. By deferring that until the container starts, we get to run
+tar on the correct architecture. It takes about 6s on my laptop to do that,
+which seems like an acceptable startup cost.
+
 # Notes
-1. I'm using https://github.com/wagoodman/dive to poke at layers. (Ironically,
+1. I used https://github.com/wagoodman/dive to look at layers' contents
+   without untarring them. (Ironically,
    this is only multiarch on Linux native, no multiarch docker image.)
   a. in cp-zookeeper:5.5.1, layer 0 is OS, 1 is netcat/less, 2 is etc/confluent,
 3 is etc/confluent, 4 is actually installing zk and kafka, and 5 is etc/docker 
