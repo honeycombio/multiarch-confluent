@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         version: ['5.5.1']
-        service: ['zookeeper, kafka']
+        service: ['zookeeper', 'kafka']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
