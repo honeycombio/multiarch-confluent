@@ -34,7 +34,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
-          context: .
           file: ./Dockerfile
           # so it uses the local fs and not the git context (https://github.com/docker/build-push-action/#usage)
           context: '.'
