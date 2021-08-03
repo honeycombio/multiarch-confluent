@@ -7,6 +7,10 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ['5.5.1']
+        service: ['zookeeper, kafka']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -19,8 +23,8 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          SERVICE=zookeeper
-          VERSION=5.5.1
+          SERVICE=${{ matrix.service }}
+          VERSION=${{ matrix.version }}
 
           github_build='true' ./build.sh $SERVICE $VERSION
 
