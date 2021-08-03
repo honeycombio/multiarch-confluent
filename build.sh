@@ -45,7 +45,7 @@ $(docker inspect ${confluent_image} | jq -r '.[0].ContainerConfig.Env[]'|sed 's/
 CMD /etc/confluent/docker/run
 EOF
 
-image_tag="honeycomb-${service}:${version}"
+image_tag="honeycombio-local/${service}:${version}"
 
 # Skip the actual build if we're on Github, because actions will take care of it
 # for us, including push.
