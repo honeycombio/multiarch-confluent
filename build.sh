@@ -40,4 +40,24 @@ $(docker inspect ${confluent_image} | jq -r '.[0].ContainerConfig.Env[]'|sed 's/
 CMD /etc/confluent/docker/run
 EOF
 
-docker build -t "test-$service" .
+image_tag="honeycomb-${service}:${version}"
+
+# Skip the actual build if we're on Github, because actions will take care of it
+# for us, including push.
+if [[ -z $github_build ]]; then
+  # Assumes you have buildx installed, and `docker buildx ls` includes both
+  # linux/amd64 and linux/arm64
+  docker buildx create --platform=linux/arm64,linux/amd64 --use --name mybuilder
+
+  if [[ "$(arch)" == "x86_64" ]]; then
+    platform=${platform:-linux/amd64}
+  else
+    platform=${platform:-linux/amd64}
+  fi
+
+  # buildx --load currently only works with one platform. If we were using --push,
+  # --platform would be a comma-separated list
+  docker buildx build -t "${image_tag}" --platform=$platform --load .
+
+  docker buildx rm mybuilder
+fi
