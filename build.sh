@@ -24,22 +24,19 @@ for l in $layers; do
     tar -xf ../$l
 done
 cd -
+
+cp ../cmd .
 tar -cvzf newtar.tar.gz newtar --transform='s/^newtar//g'
+rm -rf newtar
+
 cat > Dockerfile <<- EOF
 FROM openjdk:18-jdk-buster
+
 COPY newtar.tar.gz /newtar.tar.gz
-# RUN tar -xzvf /newtar.tar.gz
-RUN mkdir -p /etc/confluent/docker
-RUN echo 'tar -xzvf /newtar.tar.gz ; chmod +x /etc/confluent/docker/run; exec /etc/confluent/docker/run' > /etc/confluent/docker/run; chmod +x /etc/confluent/docker/run
+COPY cmd /etc/confluent/docker/run
 
 $(docker inspect ${confluent_image} | jq -r '.[0].ContainerConfig.Env[]'|sed 's/^/ENV /')
-#ENV CONFLUENT_PLATFORM_LABEL=
-#ENV CONFLUENT_VERSION=5.5.1
-#ENV CONFLUENT_DEB_VERSION=1
-#ENV ZULU_OPENJDK_VERSION=8=8.38.0.13
-#ENV LANG=C.UTF-8
-#ENV CUB_CLASSPATH=/etc/confluent/docker/docker-utils.jar
-#ENV COMPONENT=zookeeper
+
 CMD /etc/confluent/docker/run
 EOF
 
