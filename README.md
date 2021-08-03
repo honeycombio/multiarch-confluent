@@ -1,8 +1,13 @@
+# Disclaimer
+
+This is _not_ officially supported by Honeycomb, nor has it been exhaustively
+tested. We're just hoping to use it in our local dev environment.
+
 # Multiarch Confluent Images
 
 Confluent won't release arm64 images for their stuff because it "lacks
 certification"; when pressed to support the dev env usecase on M1 Macs, they
-suggest that it's just a jar, so ...
+suggest that it's just a jar, so why not build our own?
 
 But I have a better idea.
 
@@ -46,3 +51,6 @@ two images are identical, while 4 and 5 differ.
 
 2. If I can construct an image manifest by hand, I can use those layers on top
    of a known base image like ubuntu:18.04 or openjdk:18.
+
+3. With these images, I can start up my Tilt env and submit (and query) data. My
+   laptop is amd64, but that's promising.
