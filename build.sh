@@ -29,6 +29,11 @@ cp ../cmd .
 tar -cvzf newtar.tar.gz newtar --transform='s/^newtar//g'
 rm -rf newtar
 
+# Delete unneeded files so the build context is smaller.
+cat manifest.json | jq -r '.[0].Layers[]' | sed 's/.layer.tar$//g' | xargs rm -r
+rm *.json
+rm -r repositories
+
 cat > Dockerfile <<- EOF
 FROM openjdk:18-jdk-buster
 
@@ -44,9 +49,10 @@ image_tag="honeycomb-${service}:${version}"
 
 # Skip the actual build if we're on Github, because actions will take care of it
 # for us, including push.
-if [[ -z $github_build ]]; then
+if [[ -z ${github_build-} ]]; then
   # Assumes you have buildx installed, and `docker buildx ls` includes both
   # linux/amd64 and linux/arm64
+  docker buildx rm mybuilder || true
   docker buildx create --platform=linux/arm64,linux/amd64 --use --name mybuilder
 
   if [[ "$(arch)" == "x86_64" ]]; then
