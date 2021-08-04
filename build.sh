@@ -49,7 +49,8 @@ RUN python get-pip.py "pip==9.0.3" \
 COPY newtar.tar.gz /newtar.tar.gz
 COPY cmd /etc/confluent/docker/run
 
-$(docker inspect ${confluent_image} | jq -r '.[0].ContainerConfig.Env[]'|sed 's/^/ENV /')
+# Don't overwrite PATH, because openjdk:18 uses that
+$(docker inspect ${confluent_image} | jq -r '.[0].ContainerConfig.Env[]'|sed 's/^/ENV /' |  grep -v -e '^ENV PATH')
 
 CMD /etc/confluent/docker/run
 EOF
