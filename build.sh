@@ -21,7 +21,7 @@ layers=$(cat manifest.json \
     | tail -n +3)
 mkdir newtar; cd newtar
 for l in $layers; do
-    tar -xf ../$l
+    tar -xf ../$l --delay-directory-restore
 done
 cd -
 
