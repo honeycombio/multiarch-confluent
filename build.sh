@@ -36,14 +36,16 @@ rm *.json
 rm -r repositories
 
 cat > Dockerfile <<- EOF
-FROM openjdk:18-jdk-buster
+FROM openjdk:18-jdk-bullseye
 
 # This is in the 2nd layer, but is not cross-platform, so we install it here
 COPY get-pip.py .
 
+RUN apt update && apt install -y python3-distutils python3-pip
+
 # I don't know why confluent-docker-utils fails to install with pip>9.0.3, but
 # it does: https://stackoverflow.com/a/51153611
-RUN python get-pip.py "pip==9.0.3" \
+RUN python3 get-pip.py "pip==9.0.3" \
   && pip install --no-cache-dir git+https://github.com/confluentinc/confluent-docker-utils@v0.0.20
 
 COPY newtar.tar.gz /newtar.tar.gz
