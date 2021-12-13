@@ -1,13 +1,13 @@
 #!/bin/bash
-set -euo pipefail
-set -x
+set -euxo pipefail
+
 service=${1-}
 version=$2
 if ! [[ "$service" == "zookeeper" || "$service" == "kafka" ]]; then
     echo "Not recognized."
     exit 1
 fi
-rm -r $service || true
+sudo rm -rf $service || true
 mkdir -p $service
 cd $service
 confluent_image="confluentinc/cp-$service:$version"
@@ -68,7 +68,7 @@ if [[ -z ${github_build-} ]]; then
   if [[ "$(arch)" == "x86_64" ]]; then
     platform=${platform:-linux/amd64}
   else
-    platform=${platform:-linux/amd64}
+    platform=${platform:-linux/arm64}
   fi
 
   # buildx --load currently only works with one platform. If we were using --push,
