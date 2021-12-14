@@ -1,13 +1,13 @@
 #!/bin/bash
-set -euo pipefail
-set -x
+set -euxo pipefail
+
 service=${1-}
 version=$2
 if ! [[ "$service" == "zookeeper" || "$service" == "kafka" ]]; then
     echo "Not recognized."
     exit 1
 fi
-rm -r $service || true
+sudo rm -rf $service || true
 mkdir -p $service
 cd $service
 confluent_image="confluentinc/cp-$service:$version"
@@ -21,13 +21,16 @@ layers=$(cat manifest.json \
     | tail -n +3)
 mkdir newtar; cd newtar
 for l in $layers; do
+    # I don't know why the previous kafka:7.0.x could do without this chmod;  I
+    # expect it's overwriting files in layers that it wasn't before
+    chmod a+w -R ../newtar
     tar -xf ../$l
 done
 cd -
 
 cp ../cmd .
 cp ../get-pip.py .
-tar -cvzf newtar.tar.gz newtar --transform='s/^newtar//g'
+sudo tar -czf newtar.tar.gz newtar --transform='s/^newtar//g'
 rm -rf newtar
 
 # Delete unneeded files so the build context is smaller.
@@ -36,17 +39,25 @@ rm *.json
 rm -r repositories
 
 cat > Dockerfile <<- EOF
-FROM openjdk:18-jdk-buster
+FROM openjdk:18-jdk-bullseye
 
 # This is in the 2nd layer, but is not cross-platform, so we install it here
 COPY get-pip.py .
 
+RUN apt update && apt install -y python3-distutils
+
 # I don't know why confluent-docker-utils fails to install with pip>9.0.3, but
 # it does: https://stackoverflow.com/a/51153611
-RUN python get-pip.py "pip==9.0.3" \
+RUN python3 get-pip.py "pip==9.0.3" \
   && pip install --no-cache-dir git+https://github.com/confluentinc/confluent-docker-utils@v0.0.20
 
 COPY newtar.tar.gz /newtar.tar.gz
+
+# --exclude keeps newtar's python3 from stomping our base image's python3.
+# Possibly this is an indication we should exclude more layers, but ... it
+# works?
+RUN tar xzf newtar.tar.gz --exclude /usr/bin/python3
+
 COPY cmd /etc/confluent/docker/run
 
 # Don't overwrite PATH, because openjdk:18 uses that
@@ -68,7 +79,7 @@ if [[ -z ${github_build-} ]]; then
   if [[ "$(arch)" == "x86_64" ]]; then
     platform=${platform:-linux/amd64}
   else
-    platform=${platform:-linux/amd64}
+    platform=${platform:-linux/arm64}
   fi
 
   # buildx --load currently only works with one platform. If we were using --push,
