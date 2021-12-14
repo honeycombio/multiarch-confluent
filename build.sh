@@ -21,6 +21,9 @@ layers=$(cat manifest.json \
     | tail -n +3)
 mkdir newtar; cd newtar
 for l in $layers; do
+    # I don't know why the previous kafka:7.0.x could do without this chmod;  I
+    # expect it's overwriting files in layers that it wasn't before
+    chmod a+w -R ../newtar
     tar -xf ../$l
 done
 cd -
@@ -41,7 +44,7 @@ FROM openjdk:18-jdk-bullseye
 # This is in the 2nd layer, but is not cross-platform, so we install it here
 COPY get-pip.py .
 
-RUN apt update && apt install -y python3-distutils python3-pip
+RUN apt update && apt install -y python3-distutils
 
 # I don't know why confluent-docker-utils fails to install with pip>9.0.3, but
 # it does: https://stackoverflow.com/a/51153611
