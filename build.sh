@@ -27,7 +27,7 @@ cd -
 
 cp ../cmd .
 cp ../get-pip.py .
-tar -cvzf newtar.tar.gz newtar --transform='s/^newtar//g'
+sudo tar -czf newtar.tar.gz newtar --transform='s/^newtar//g'
 rm -rf newtar
 
 # Delete unneeded files so the build context is smaller.
