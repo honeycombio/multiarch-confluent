@@ -52,6 +52,12 @@ RUN python3 get-pip.py "pip==9.0.3" \
   && pip install --no-cache-dir git+https://github.com/confluentinc/confluent-docker-utils@v0.0.20
 
 COPY newtar.tar.gz /newtar.tar.gz
+
+# --exclude keeps newtar's python3 from stomping our base image's python3.
+# Possibly this is an indication we should exclude more layers, but ... it
+# works?
+RUN tar xzf newtar.tar.gz --exclude /usr/bin/python3
+
 COPY cmd /etc/confluent/docker/run
 
 # Don't overwrite PATH, because openjdk:18 uses that
